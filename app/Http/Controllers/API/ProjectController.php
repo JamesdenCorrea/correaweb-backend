@@ -45,30 +45,31 @@ class ProjectController extends Controller
     }
 
 // ✅ UPDATE PROJECT — ADMIN ONLY
-    public function update(Request $request, $id)
-    {
-        if(!$this->isAuthorized($request)){
-            return response()->json(['message' => "Unauthorized"], 401);
-        }
-        $project = Project::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'tech_stack' => 'nullable|string',
-            'image' => 'nullable|string',
-            'github_link' => 'nullable|url',
-            'demo_link' => 'nullable|url',
-            'screenshots' => 'nullable|array',
-            'screenshots.*.image' => 'required|string',
-            'screenshots.*.caption' => 'required|string',
-
-        ]);
-
-        $project->update($validated);
-
-        return response()->json($project);
+public function update(Request $request, $id)
+{
+    if(!$this->isAuthorized($request)){
+        return response()->json(['message' => "Unauthorized"], 401);
     }
+    $project = Project::findOrFail($id);
+
+    $validated = $request->validate([
+        'name' => 'sometimes|required|string|max:255',
+        'description' => 'nullable|string',
+        'tech_stack' => 'nullable|string',
+        'image' => 'nullable|string',
+        'github_link' => 'nullable|url',
+        'demo_link' => 'nullable|url',
+        'screenshots' => 'nullable|array',
+        // Make 'image' nullable or sometimes required
+        'screenshots.*.image' => 'sometimes|required|string',
+        'screenshots.*.caption' => 'nullable|string',
+    ]);
+
+    $project->update($validated);
+
+    return response()->json($project);
+}
+
 
     public function destroy(Request $request, $id)
     {
