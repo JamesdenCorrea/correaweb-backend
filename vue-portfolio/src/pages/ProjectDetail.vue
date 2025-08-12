@@ -20,31 +20,17 @@
             {{ project.tech_stack || 'No tech stack yet' }}
           </p>
           <template v-if="isAdmin">
-            <button
-              v-if="!project.tech_stack"
-              @click="startEdit('tech_stack')"
-              class="text-blue-500"
-            >➕</button>
-            <button
-              v-else
-              @click="startEdit('tech_stack')"
-              class="text-yellow-500"
-            >✏️</button>
-            <button
-              v-if="project.tech_stack"
-              @click="updateField('tech_stack', '')"
-              class="text-red-500"
-            >🗑</button>
+            <button v-if="!project.tech_stack" @click="startEdit('tech_stack')" class="text-blue-500">➕</button>
+            <button v-else @click="startEdit('tech_stack')" class="text-yellow-500">✏️</button>
+            <button v-if="project.tech_stack" @click="updateField('tech_stack', '')" class="text-red-500">🗑</button>
           </template>
         </div>
         <div v-if="editingField === 'tech_stack'" class="flex items-center gap-2 mt-2">
           <input
             v-model="editValue"
             @keyup.enter="saveEdit('tech_stack')"
-            @blur="saveEdit('tech_stack')"
             class="w-full border p-2 rounded"
             placeholder="Enter tech stack"
-            autofocus
           />
           <button @click="saveEdit('tech_stack')" class="text-green-500">✅</button>
         </div>
@@ -52,64 +38,35 @@
 
       <!-- Carousel -->
       <div v-if="project.screenshots?.length" class="relative mb-6">
-        <div class="rounded-xl overflow-hidden shadow relative">
+        <div class="rounded-xl overflow-hidden shadow">
           <img
             :src="currentSlide.image"
             :alt="project.name"
             class="w-full max-h-[400px] object-cover transition duration-300"
           />
-          <template v-if="isAdmin">
-            <!-- Replace Image -->
-            <input
-              type="file"
-              accept="image/*"
-              @change="replaceSlideImage($event)"
-              class="absolute top-2 right-2 opacity-0 w-8 h-8 cursor-pointer"
-              title="Replace Image"
-            />
-          </template>
         </div>
-
-        <!-- Caption -->
         <div class="mt-2 text-center">
           <span class="italic text-gray-600">{{ currentSlide.caption || 'No caption yet' }}</span>
           <template v-if="isAdmin">
             <button @click="startSlideCaptionEdit" class="ml-2 text-yellow-500">✏️</button>
-            <button @click="deleteSlide" class="ml-2 text-red-500">🗑</button>
+            <button @click="deleteSlide(currentSlideIndex)" class="ml-2 text-red-500">🗑</button>
           </template>
         </div>
 
-        <!-- Edit caption input -->
         <div v-if="editingSlideCaption" class="mt-2 flex justify-center gap-2">
           <input
             v-model="editValue"
             @keyup.enter="saveSlideCaption"
-            @blur="saveSlideCaption"
             class="border p-2 rounded w-2/3"
             placeholder="Enter caption"
-            autofocus
           />
           <button @click="saveSlideCaption" class="text-green-500">✅</button>
         </div>
 
         <!-- Slide Controls -->
         <div class="flex justify-between items-center mt-4">
-          <button
-            @click="prevSlide"
-            class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            ← Prev
-          </button>
-          <div class="flex gap-2 items-center">
-            <button
-              v-if="isAdmin"
-              @click="moveSlideLeft(currentSlideIndex)"
-              :disabled="currentSlideIndex === 0"
-              title="Move slide left"
-              class="text-blue-500 disabled:text-gray-400"
-            >
-              ⬅️
-            </button>
+          <button @click="prevSlide" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">← Prev</button>
+          <div class="flex gap-2">
             <span
               v-for="(slide, index) in project.screenshots"
               :key="index"
@@ -120,22 +77,26 @@
               }"
               @click="currentSlideIndex = index"
             ></span>
-            <button
-              v-if="isAdmin"
-              @click="moveSlideRight(currentSlideIndex)"
-              :disabled="currentSlideIndex === project.screenshots.length -1"
-              title="Move slide right"
-              class="text-blue-500 disabled:text-gray-400"
-            >
-              ➡️
-            </button>
           </div>
-          <button
-            @click="nextSlide"
-            class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            Next →
-          </button>
+          <button @click="nextSlide" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next →</button>
+        </div>
+
+        <!-- Reorder Slides -->
+        <div v-if="isAdmin" class="mt-4">
+          <label class="font-semibold">Reorder Slides:</label>
+          <ul class="mt-2">
+            <li
+              v-for="(slide, index) in project.screenshots"
+              :key="index"
+              draggable="true"
+              @dragstart="onDragStart(index)"
+              @dragover.prevent
+              @drop="onDrop(index)"
+              class="p-2 border rounded mb-2 flex justify-between items-center bg-gray-50 cursor-move"
+            >
+              <span>{{ index + 1 }}. {{ slide.caption || 'No caption' }}</span>
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -144,20 +105,14 @@
         <label class="font-semibold">Add Slide:</label>
         <div class="flex flex-col gap-2">
           <input
+            ref="fileInput"
             type="file"
             @change="handleImageUpload"
             accept="image/*"
             class="border p-2 rounded"
           />
-          <input
-            type="text"
-            v-model="newSlide.caption"
-            placeholder="Caption"
-            class="border p-2 rounded"
-          />
-          <button @click="addSlide" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" :disabled="!newSlide.image">
-            ➕ Add Slide
-          </button>
+          <input type="text" v-model="newSlide.caption" placeholder="Caption" class="border p-2 rounded" />
+          <button @click="addSlide" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">➕ Add Slide</button>
         </div>
       </div>
 
@@ -178,10 +133,8 @@
           <textarea
             v-model="editValue"
             @keyup.enter="saveEdit('description')"
-            @blur="saveEdit('description')"
             class="w-full border p-2 rounded"
             placeholder="Enter project description"
-            autofocus
           ></textarea>
           <button @click="saveEdit('description')" class="text-green-500">✅</button>
         </div>
@@ -191,13 +144,7 @@
       <div class="mb-4">
         <label class="font-semibold">GitHub Link:</label>
         <div class="flex items-center gap-2">
-          <a
-            v-if="project.github_link"
-            :href="project.github_link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-blue-600 underline hover:text-blue-800"
-          >🔗 GitHub</a>
+          <a v-if="project.github_link" :href="project.github_link" target="_blank" class="text-blue-600 underline hover:text-blue-800">🔗 GitHub</a>
           <template v-if="isAdmin">
             <button v-if="!project.github_link" @click="startEdit('github_link')" class="text-blue-500">➕</button>
             <button v-else @click="startEdit('github_link')" class="text-yellow-500">✏️</button>
@@ -205,14 +152,7 @@
           </template>
         </div>
         <div v-if="editingField === 'github_link'" class="flex items-center gap-2 mt-2">
-          <input
-            v-model="editValue"
-            @keyup.enter="saveEdit('github_link')"
-            @blur="saveEdit('github_link')"
-            class="w-full border p-2 rounded"
-            placeholder="Enter valid URL starting with https://"
-            autofocus
-          />
+          <input v-model="editValue" @keyup.enter="saveEdit('github_link')" class="w-full border p-2 rounded" placeholder="Enter URL" />
           <button @click="saveEdit('github_link')" class="text-green-500">✅</button>
         </div>
       </div>
@@ -220,13 +160,7 @@
       <div class="mb-4">
         <label class="font-semibold">Demo Link:</label>
         <div class="flex items-center gap-2">
-          <a
-            v-if="project.demo_link"
-            :href="project.demo_link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-green-600 underline hover:text-green-800"
-          >🚀 Live Demo</a>
+          <a v-if="project.demo_link" :href="project.demo_link" target="_blank" class="text-green-600 underline hover:text-green-800">🚀 Live Demo</a>
           <template v-if="isAdmin">
             <button v-if="!project.demo_link" @click="startEdit('demo_link')" class="text-blue-500">➕</button>
             <button v-else @click="startEdit('demo_link')" class="text-yellow-500">✏️</button>
@@ -234,14 +168,7 @@
           </template>
         </div>
         <div v-if="editingField === 'demo_link'" class="flex items-center gap-2 mt-2">
-          <input
-            v-model="editValue"
-            @keyup.enter="saveEdit('demo_link')"
-            @blur="saveEdit('demo_link')"
-            class="w-full border p-2 rounded"
-            placeholder="Enter valid URL starting with https://"
-            autofocus
-          />
+          <input v-model="editValue" @keyup.enter="saveEdit('demo_link')" class="w-full border p-2 rounded" placeholder="Enter URL" />
           <button @click="saveEdit('demo_link')" class="text-green-500">✅</button>
         </div>
       </div>
@@ -263,7 +190,8 @@ export default {
       editingField: null,
       editValue: '',
       editingSlideCaption: false,
-      newSlide: { image: '', caption: '' }
+      newSlide: { image: '', caption: '' },
+      dragStartIndex: null
     }
   },
   computed: {
@@ -276,6 +204,11 @@ export default {
     }
   },
   methods: {
+    // URL validation with TLD
+    validateURL(url) {
+      const regex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/
+      return regex.test(url)
+    },
     nextSlide() {
       if (this.project?.screenshots?.length) {
         this.currentSlideIndex = (this.currentSlideIndex + 1) % this.project.screenshots.length
@@ -291,20 +224,12 @@ export default {
       this.editValue = this.project[field] || ''
     },
     saveEdit(field) {
-      if (
-        (field === 'github_link' || field === 'demo_link') &&
-        this.editValue &&
-        !this.isValidUrl(this.editValue)
-      ) {
-        alert('Please enter a valid URL starting with https://')
+      if (['github_link', 'demo_link'].includes(field) && this.editValue && !this.validateURL(this.editValue)) {
+        alert('Please enter a valid URL with a domain (e.g., https://example.com)')
         return
       }
       this.updateField(field, this.editValue)
       this.editingField = null
-      if (field === 'github_link' || field === 'demo_link') {
-        // fix link display by forcing reload from backend if needed
-        this.fetchProject()
-      }
     },
     updateField(field, value) {
       axios.put(`${import.meta.env.VITE_API_URL}/projects/${this.project.id}`, { [field]: value })
@@ -327,98 +252,70 @@ export default {
         })
         .catch(err => console.error('Failed to update caption:', err))
     },
+    deleteSlide(index) {
+      if (!confirm('Are you sure you want to delete this slide?')) return
+      const updatedSlides = this.project.screenshots.filter((_, i) => i !== index)
+      axios.put(`${import.meta.env.VITE_API_URL}/projects/${this.project.id}`, { screenshots: updatedSlides })
+        .then(() => {
+          this.project.screenshots = updatedSlides
+          this.currentSlideIndex = Math.min(this.currentSlideIndex, updatedSlides.length - 1)
+        })
+        .catch(err => console.error('Failed to delete slide:', err))
+    },
     handleImageUpload(e) {
       const file = e.target.files[0]
       if (!file) return
-      const formData = new FormData()
-      formData.append('image', file)
-
-      axios.post(`${import.meta.env.VITE_API_URL}/upload`, formData)
-        .then(res => {
-          this.newSlide.image = res.data.url
-        })
-        .catch(err => console.error('Image upload failed:', err))
+      const reader = new FileReader()
+      reader.onload = () => {
+        this.newSlide.image = reader.result
+      }
+      reader.readAsDataURL(file)
     },
     addSlide() {
-      if (!this.newSlide.image) return
+      if (!this.newSlide.image) {
+        alert('Please select an image to upload')
+        return
+      }
       const updatedSlides = [...(this.project.screenshots || []), { ...this.newSlide }]
       axios.put(`${import.meta.env.VITE_API_URL}/projects/${this.project.id}`, { screenshots: updatedSlides })
         .then(() => {
           this.project.screenshots = updatedSlides
           this.newSlide = { image: '', caption: '' }
-          this.currentSlideIndex = this.project.screenshots.length - 1 // jump to new slide
+          // Show the newly added slide immediately
+          this.currentSlideIndex = updatedSlides.length - 1
+          // Clear file input value to allow re-upload same file if needed
+          this.$refs.fileInput.value = ''
         })
         .catch(err => console.error('Failed to add slide:', err))
     },
-    replaceSlideImage(e) {
-      const file = e.target.files[0]
-      if (!file) return
-      const formData = new FormData()
-      formData.append('image', file)
-
-      axios.post(`${import.meta.env.VITE_API_URL}/upload`, formData)
-        .then(res => {
-          const slides = [...this.project.screenshots]
-          slides[this.currentSlideIndex].image = res.data.url
-          return axios.put(`${import.meta.env.VITE_API_URL}/projects/${this.project.id}`, { screenshots: slides })
-            .then(() => {
-              this.project.screenshots[this.currentSlideIndex].image = res.data.url
-            })
-        })
-        .catch(err => console.error('Failed to replace image:', err))
+    // Drag-and-drop reorder
+    onDragStart(index) {
+      this.dragStartIndex = index
     },
-    deleteSlide() {
-      const updatedSlides = this.project.screenshots.filter((_, idx) => idx !== this.currentSlideIndex)
-      axios.put(`${import.meta.env.VITE_API_URL}/projects/${this.project.id}`, { screenshots: updatedSlides })
-        .then(() => {
-          this.project.screenshots = updatedSlides
-          this.currentSlideIndex = 0
-        })
-        .catch(err => console.error('Failed to delete slide:', err))
-    },
-    moveSlideLeft(index) {
-      if (index === 0) return
+    onDrop(dropIndex) {
       const slides = [...this.project.screenshots]
-      const temp = slides[index - 1]
-      slides[index - 1] = slides[index]
-      slides[index] = temp
-      this.saveSlidesOrder(slides)
-      this.currentSlideIndex = index - 1
-    },
-    moveSlideRight(index) {
-      if (index === this.project.screenshots.length - 1) return
-      const slides = [...this.project.screenshots]
-      const temp = slides[index + 1]
-      slides[index + 1] = slides[index]
-      slides[index] = temp
-      this.saveSlidesOrder(slides)
-      this.currentSlideIndex = index + 1
-    },
-    saveSlidesOrder(slides) {
+      const [movedSlide] = slides.splice(this.dragStartIndex, 1)
+      slides.splice(dropIndex, 0, movedSlide)
+      this.dragStartIndex = null
       axios.put(`${import.meta.env.VITE_API_URL}/projects/${this.project.id}`, { screenshots: slides })
         .then(() => {
           this.project.screenshots = slides
-        })
-        .catch(err => console.error('Failed to reorder slides:', err))
-    },
-    fetchProject() {
-      axios.get(`${import.meta.env.VITE_API_URL}/projects/${this.$route.params.id}`)
-        .then(res => {
-          this.project = res.data
-          if (this.currentSlideIndex >= this.project.screenshots.length) {
-            this.currentSlideIndex = 0
+          // Adjust currentSlideIndex if needed
+          if (this.currentSlideIndex === this.dragStartIndex) {
+            this.currentSlideIndex = dropIndex
           }
         })
-        .catch(err => console.error('Error fetching project:', err))
-    },
-    isValidUrl(url) {
-      // Basic check for https URL with common TLDs
-      const pattern = /^https:\/\/.+\.(com|net|io|org|dev|app|tech|me|co|edu)(\/.*)?$/i
-      return pattern.test(url)
+        .catch(err => console.error('Failed to reorder slides:', err))
     }
   },
   mounted() {
-    this.fetchProject()
+    const projectId = this.$route.params.id
+    axios.get(`${import.meta.env.VITE_API_URL}/projects/${projectId}`)
+      .then(res => {
+        this.project = res.data
+        this.currentSlideIndex = 0
+      })
+      .catch(err => console.error('Error fetching project:', err))
   }
 }
 </script>

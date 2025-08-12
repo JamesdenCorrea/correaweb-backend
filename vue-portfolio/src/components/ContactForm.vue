@@ -1,15 +1,15 @@
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-    <!-- Enhanced Modal Container -->
-    <div 
-      class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-2xl relative border border-slate-200/50 overflow-hidden transform animate-modal-enter"
+    <!-- Responsive Modal Wrapper -->
+    <div
+      class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-2xl relative border border-slate-200/50 overflow-hidden transform animate-modal-enter scale-[.95] sm:scale-100 max-h-[95vh] overflow-y-auto"
       @click.stop
     >
-      <!-- Animated Background Elements -->
+      <!-- Background Effects -->
       <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-2xl animate-pulse"></div>
       <div class="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-pink-500/10 to-rose-500/10 rounded-full blur-2xl animate-pulse delay-1000"></div>
 
-      <!-- Enhanced Close Button -->
+      <!-- Close Button -->
       <button
         @click="emitClose"
         class="absolute top-6 right-6 z-20 w-12 h-12 rounded-2xl bg-slate-100/80 hover:bg-red-100 backdrop-blur-sm flex items-center justify-center text-slate-600 hover:text-red-600 transition-all duration-300 hover:scale-110 shadow-lg group"
@@ -20,7 +20,7 @@
       </button>
 
       <!-- Modal Content -->
-      <div class="relative z-10 p-8 md:p-12">
+      <div class="relative z-10 p-4 sm:p-8 md:p-12">
         <!-- Enhanced Header -->
         <div class="text-center mb-10">
           <div class="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center shadow-2xl animate-bounce-subtle">
@@ -152,8 +152,8 @@
         <div class="mt-8 pt-6 border-t border-slate-200/50">
           <p class="text-center text-slate-500 text-sm">
             Or reach me directly at 
-            <a href="mailto:your-email@example.com" class="text-blue-600 hover:text-blue-800 font-medium transition-colors">
-              your-email@example.com
+            <a href="mailto:correajamesden@gmail.com" class="text-blue-600 hover:text-blue-800 font-medium transition-colors">
+              correajamesden@gmail.com
             </a>
           </p>
         </div>
