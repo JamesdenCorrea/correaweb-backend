@@ -1,28 +1,40 @@
-# Use PHP with Apache
+# Use PHP 8.2 with Apache
 FROM php:8.2-apache
-
-# Enable required PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Install Composer
-COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy project files
-COPY . .
+# Install system dependencies and PHP extensions required by Laravel
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    zip \
+    libzip-dev \
+    libonig-dev \
+    libxml2-dev \
+    curl \
+    && docker-php-ext-install pdo pdo_mysql mbstring xml zip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install PHP dependencies
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# Install Composer globally
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+
+# Copy composer files first for better caching
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies (production only)
 RUN composer install --no-dev --optimize-autoloader
 
-# Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Copy the rest of the project files
+COPY . .
 
-# Expose port
+# Set permissions for Laravel storage and cache
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Expose Apache port
 EXPOSE 80
 
 # Start Apache
