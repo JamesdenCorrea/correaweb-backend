@@ -22,13 +22,13 @@ RUN a2enmod rewrite
 # Install Composer globally
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
-# Copy composer files first for better caching
+# Copy composer files first for caching
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies (production only)
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy the rest of the project files
+# Copy the rest of the project files (includes artisan)
 COPY . .
 
 # Set permissions for Laravel storage and cache
